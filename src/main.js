@@ -19,6 +19,8 @@ app.appendChild(renderer.domElement);
 const scene = new THREE.Scene();
 // near は深度精度改善のため 0.25（会場スケール30mなので支障なし）
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.25, 200);
+// QA用: 検証スクリプトからカメラを直接操作できるようにする
+window.__booth = { camera };
 
 // ---- テクスチャの事前ロード ----
 const maxAniso = renderer.capabilities.getMaxAnisotropy();

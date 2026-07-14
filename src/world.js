@@ -324,10 +324,10 @@ export function buildWorld(scene, textures) {
   scene.add(counterTop);
   // 前面: 専用テクスチャ（ロゴ中央）を全面貼り
   mkWrap(cW, cH - 0.05, new THREE.Vector3(cX, (cH - 0.05) / 2, cZ + cD / 2 + 0.005), 0, 'counter');
-  // 小口はフラットな深い青（前面テクスチャの明るい部分を流用しない）
-  const endFlat = { flat: { A: 0x16309a, B: 0x0b1330 } };
-  mkWrap(cD, cH - 0.05, new THREE.Vector3(cX - cW / 2 - 0.005, (cH - 0.05) / 2, cZ), -Math.PI / 2, 'sidewall', endFlat);
-  mkWrap(cD, cH - 0.05, new THREE.Vector3(cX + cW / 2 + 0.005, (cH - 0.05) / 2, cZ), Math.PI / 2, 'sidewall', endFlat);
+  // 小口: A案=前面と一続きの同心円グラデ用テクスチャ、B案=フラットな深い紺
+  const endFlat = { flat: { B: 0x0b1330 } };
+  mkWrap(cD, cH - 0.05, new THREE.Vector3(cX - cW / 2 - 0.005, (cH - 0.05) / 2, cZ), -Math.PI / 2, 'counterEndL', endFlat);
+  mkWrap(cD, cH - 0.05, new THREE.Vector3(cX + cW / 2 + 0.005, (cH - 0.05) / 2, cZ), Math.PI / 2, 'counterEndR', endFlat);
   addCollider(cX, cZ, cW, cD);
   // 折りたたみ椅子（簡素）
   const chairMat = new THREE.MeshStandardMaterial({ color: 0x40464f, roughness: 0.7 });
@@ -456,6 +456,7 @@ export function buildWorld(scene, textures) {
       wall: s.wall, mon0: s.monitors[0], mon1: s.monitors[1], banner: s.banner, label: s.label,
       stockfront: s.stockfront, partition: s.partition,
       backwall: s.backwall, sidewall: s.sidewall, counter: s.counter,
+      counterEndL: s.counterEndL, counterEndR: s.counterEndR,
     };
     clones.forEach((c) => c.dispose());
     clones = [];

@@ -16,6 +16,9 @@ export const SCHEMES = {
     backwall: '/textures/backwall-a.png',
     sidewall: '/textures/sidewall-a.png',
     counter: '/textures/counter-a.png',
+    // 受付カウンター小口（前面と一続きの同心円グラデ）。B案はフラット色のため未使用。
+    counterEndL: '/textures/counter-end-left-a.png',
+    counterEndR: '/textures/counter-end-right-a.png',
   },
   B: {
     key: 'B',
@@ -39,7 +42,8 @@ export const ALL_TEXTURES = [
     Object.values(SCHEMES).flatMap((s) => [
       s.wall, ...s.monitors, s.banner, s.label,
       s.stockfront, s.partition, s.backwall, s.sidewall, s.counter,
-    ]),
+      s.counterEndL, s.counterEndR,
+    ]).filter(Boolean),
   ),
 ];
 
