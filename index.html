@@ -109,6 +109,34 @@
         display: none;
       }
       #crosshair.on { display: block; }
+
+      #loading {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: rgba(5, 7, 12, 0.92);
+        z-index: 20;
+        transition: opacity 0.2s ease;
+      }
+      #loading[hidden] { display: none; }
+      #loading-card { width: min(360px, calc(100vw - 48px)); text-align: center; }
+      #loading-title { margin-bottom: 12px; font-size: 14px; }
+      #loading-track {
+        height: 8px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+      }
+      #loading-bar {
+        width: 0;
+        height: 100%;
+        background: #4aa8ff;
+        border-radius: inherit;
+        transition: width 0.15s ease;
+      }
+      #loading-detail { margin-top: 8px; font-size: 11px; color: var(--muted); }
+      #asset-status { min-height: 1.4em; margin-top: 8px; font-size: 11px; color: var(--muted); }
     </style>
   </head>
   <body>
@@ -150,10 +178,19 @@
         マウスで視点 / <b>ESC</b> で視点操作を解除<br />
         <b>俯瞰:</b> ドラッグで回転 / ホイールで拡大
       </div>
+      <div id="asset-status" aria-live="polite"></div>
     </div>
 
     <div id="hint" class="hidden"><span>クリックして歩き回る（ESCで解除）</span></div>
     <div id="crosshair"></div>
+
+    <div id="loading" role="status" aria-live="polite">
+      <div id="loading-card">
+        <div id="loading-title">A案を読み込んでいます</div>
+        <div id="loading-track"><div id="loading-bar"></div></div>
+        <div id="loading-detail">0 / 0</div>
+      </div>
+    </div>
 
     <script type="module" src="/src/main.js"></script>
   </body>

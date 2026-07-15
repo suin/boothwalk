@@ -6,50 +6,47 @@ export const SCHEMES = {
     key: 'A',
     name: 'A案（白×爽快）',
     tagline: '間口を広げる',
-    wall: '/textures/kv-a.jpg',
-    monitors: ['/textures/kv-a-copy.jpg', '/textures/kv-a-copy-heroku.jpg'],
-    banner: '/textures/banner-a.jpg',
-    label: '/textures/label-a.png', // ノベルティボトルのラベル（中央=正面、左右端は無地）
+    wall: '/textures/kv-a.webp',
+    monitors: ['/textures/kv-a-copy.webp', '/textures/kv-a-copy-heroku.webp'],
+    banner: '/textures/banner-a.webp',
+    label: '/textures/label-a.webp', // ノベルティボトルのラベル（中央=正面、左右端は無地）
     // カンプから射影抽出した面ごとの専用テクスチャ
-    stockfront: '/textures/stockfront-a.png',
-    partition: '/textures/partition-a.png', // 間仕切り主エリア側（前面と1枚続きのグラデ）
-    backwall: '/textures/backwall-a.png',
-    sidewall: '/textures/sidewall-a.png',
-    counter: '/textures/counter-a.png',
+    stockfront: '/textures/stockfront-a.webp',
+    partition: '/textures/partition-a.webp', // 間仕切り主エリア側（前面と1枚続きのグラデ）
+    backwall: '/textures/backwall-a.webp',
+    sidewall: '/textures/sidewall-a.webp',
+    counter: '/textures/counter-a.webp',
     // 受付カウンター小口（前面と一続きの同心円グラデ）。B案はフラット色のため未使用。
-    counterEndL: '/textures/counter-end-left-a.png',
-    counterEndR: '/textures/counter-end-right-a.png',
+    counterEndL: '/textures/counter-end-left-a.webp',
+    counterEndR: '/textures/counter-end-right-a.webp',
   },
   B: {
     key: 'B',
     name: 'B案（紺×精密）',
     tagline: '信頼を先に立てる',
-    wall: '/textures/kv-b.jpg',
-    monitors: ['/textures/kv-b-copy.jpg', '/textures/kv-b-bright.jpg'],
-    banner: '/textures/banner-b.jpg',
-    label: '/textures/label-b.png',
-    stockfront: '/textures/stockfront-b.png',
-    partition: '/textures/partition-b.png',
-    backwall: '/textures/backwall-b.png',
-    sidewall: '/textures/sidewall-b.png',
-    counter: '/textures/counter-b.png',
+    wall: '/textures/kv-b.webp',
+    monitors: ['/textures/kv-b-copy.webp', '/textures/kv-b-bright.webp'],
+    banner: '/textures/banner-b.webp',
+    label: '/textures/label-b.webp',
+    stockfront: '/textures/stockfront-b.webp',
+    partition: '/textures/partition-b.webp',
+    backwall: '/textures/backwall-b.webp',
+    sidewall: '/textures/sidewall-b.webp',
+    counter: '/textures/counter-b.webp',
   },
 };
 
-// 事前ロードするテクスチャの一覧（重複なし）。
-export const ALL_TEXTURES = [
-  ...new Set(
-    Object.values(SCHEMES).flatMap((s) => [
-      s.wall, ...s.monitors, s.banner, s.label,
-      s.stockfront, s.partition, s.backwall, s.sidewall, s.counter,
-      s.counterEndL, s.counterEndR,
-    ]).filter(Boolean),
-  ),
-];
+// 実際に3D空間へ貼る画像だけを案ごとにロードする。wall/monitors は現在未使用。
+export const SCHEME_TEXTURES = Object.fromEntries(
+  Object.entries(SCHEMES).map(([key, s]) => [key, [
+    s.banner, s.label, s.stockfront, s.partition, s.backwall, s.sidewall,
+    s.counter, s.counterEndL, s.counterEndR,
+  ].filter(Boolean)]),
+);
 
 // ディスプレイの固定コンテンツ（A/B非依存）。ファイル未配置時は各自 404 → 黒フォールバック。
 export const DISPLAY_TEXTURES = {
-  slides: ['/textures/slide-1.png', '/textures/slide-2.png', '/textures/slide-3.png'],
-  website: '/textures/screen-website.png',
-  zundamon: '/textures/screen-zundamon.png',
+  slides: ['/textures/slide-1.webp', '/textures/slide-2.webp', '/textures/slide-3.webp'],
+  website: '/textures/screen-website.webp',
+  zundamon: '/textures/screen-zundamon.webp',
 };

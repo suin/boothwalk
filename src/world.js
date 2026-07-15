@@ -204,7 +204,7 @@ export function buildWorld(scene, textures) {
   mkBoard(STOCK_W - 0.04, BOARD_H, new THREE.Vector3(SP_CX, BOARD_Y, FRONT_Z + 0.1), 0, 'stockfront');
   // 中央モニター＝スライドショー（slide-1/2/3 を4秒間隔で単純切替、A/B共通）
   const slideScreen = mkScreen(1.1, new THREE.Vector3(SP_CX, 1.4, FRONT_Z + 0.1), 0);
-  const slides = DISPLAY_TEXTURES.slides.map((u) => tex(u)).filter(Boolean);
+  let slides = [];
 
   // ================= 間仕切りの主エリア側（+x）=================
   // 手前(前寄り)約2.0m: 専用テクスチャ partition（前面と1枚続きのグラデ）。奥(背面側)約0.9m: ドア。
@@ -236,8 +236,12 @@ export function buildWorld(scene, textures) {
   // 壁付けモニター2台（固定コンテンツ・A/B非依存）。左=サイト、右=ずんだもん。
   const webScreen = mkScreen(1.05, new THREE.Vector3(1.7, 1.7, BOOTH.backZ + 0.1), 0);
   const zundamonScreen = mkScreen(1.05, new THREE.Vector3(3.3, 1.7, BOOTH.backZ + 0.1), 0);
-  setScreen(webScreen, DISPLAY_TEXTURES.website);
-  setScreen(zundamonScreen, DISPLAY_TEXTURES.zundamon);
+  function refreshDisplayTextures() {
+    slides = DISPLAY_TEXTURES.slides.map((u) => tex(u)).filter(Boolean);
+    slideIdx = -1;
+    setScreen(webScreen, DISPLAY_TEXTURES.website);
+    setScreen(zundamonScreen, DISPLAY_TEXTURES.zundamon);
+  }
 
   // ================= 側面ボード（item 8・ロゴなしのグラデ/モチーフ領域）=================
   // ロゴは手前のバナーにあるため壁面には出さない。zoom で切り出しを狭め、
@@ -542,5 +546,6 @@ export function buildWorld(scene, textures) {
   }
 
   const spawn = new THREE.Vector3(0, 1.6, 9);
-  return { applyScheme, setVenueBright, update, colliders, spawn };
+  refreshDisplayTextures();
+  return { applyScheme, refreshDisplayTextures, setVenueBright, update, colliders, spawn };
 }

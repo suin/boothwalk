@@ -1,9 +1,15 @@
 import * as THREE from 'three';
-import { SCHEMES, ALL_TEXTURES, DISPLAY_TEXTURES } from './schemes.js';
+import { SCHEMES, SCHEME_TEXTURES, DISPLAY_TEXTURES } from './schemes.js';
 import { buildWorld } from './world.js';
 import { createControls } from './controls.js';
 
-const app = document.getElementById('app');
+const $ = (id) => document.getElementById(id);
+const app = $('app');
+const loading = $('loading');
+const loadingTitle = $('loading-title');
+const loadingBar = $('loading-bar');
+const loadingDetail = $('loading-detail');
+const assetStatus = $('asset-status');
 
 // ---- レンダラ ----
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -22,35 +28,59 @@ const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerH
 // QA用: 検証スクリプトからカメラを直接操作できるようにする
 window.__booth = { camera };
 
-// ---- テクスチャの事前ロード ----
+// ---- テクスチャ読み込み ----
 const maxAniso = renderer.capabilities.getMaxAnisotropy();
-const manager = new THREE.LoadingManager();
-const loader = new THREE.TextureLoader(manager);
+const loader = new THREE.TextureLoader();
 const textures = new Map();
 
-// ディスプレイ固定コンテンツも同じ manager 経由でロード（未配置なら 404 → 黒フォールバック）。
-const displayUrls = [...DISPLAY_TEXTURES.slides, DISPLAY_TEXTURES.website, DISPLAY_TEXTURES.zundamon];
-for (const url of [...ALL_TEXTURES, ...displayUrls]) {
-  loader.load(url, (t) => {
-    t.colorSpace = THREE.SRGBColorSpace;
-    t.anisotropy = maxAniso;
-    t.wrapS = THREE.RepeatWrapping;
-    t.wrapT = THREE.RepeatWrapping;
-    t.generateMipmaps = true;
-    t.minFilter = THREE.LinearMipmapLinearFilter;
-    textures.set(url, t);
-  });
+function showLoading(title, loaded, total) {
+  loadingTitle.textContent = title;
+  loadingBar.style.width = `${total ? (loaded / total) * 100 : 0}%`;
+  loadingDetail.textContent = `${loaded} / ${total}`;
+  loading.hidden = false;
 }
 
-// 未配置のディスプレイ/間仕切りテクスチャは 404 → フォールバック表示。error ではなく warn。
-manager.onError = (url) => console.warn('テクスチャ未ロード（フォールバック表示）:', url);
-manager.onLoad = start;
+function hideLoading() {
+  loading.hidden = true;
+}
+
+async function loadTextures(urls, onProgress = () => {}) {
+  const pending = [...new Set(urls)].filter((url) => !textures.has(url));
+  let completed = 0;
+  onProgress(completed, pending.length);
+
+  await Promise.all(pending.map(async (url) => {
+    try {
+      const texture = await loader.loadAsync(url);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.anisotropy = maxAniso;
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.generateMipmaps = true;
+      texture.minFilter = THREE.LinearMipmapLinearFilter;
+      textures.set(url, texture);
+    } catch (error) {
+      console.warn('テクスチャ未ロード（フォールバック表示）:', url, error);
+    } finally {
+      completed += 1;
+      onProgress(completed, pending.length);
+    }
+  }));
+}
+
+async function initialize() {
+  await loadTextures(SCHEME_TEXTURES.A, (loaded, total) => {
+    showLoading('A案を読み込んでいます', loaded, total);
+  });
+  start();
+  hideLoading();
+}
 
 function start() {
   const world = buildWorld(scene, textures);
 
   // ---- 状態 ----
-  const state = { scheme: 'A', bright: true, mode: 'fp' };
+  const state = { scheme: 'A', bright: true, mode: 'fp', schemeLoading: false };
   world.applyScheme(state.scheme);
   world.setVenueBright(state.bright);
 
@@ -61,13 +91,14 @@ function start() {
   controls.setMode('fp');
 
   // ================= UI =================
-  const $ = (id) => document.getElementById(id);
   const hint = $('hint');
   const crosshair = $('crosshair');
 
   function refreshButtons() {
     $('btn-a').classList.toggle('active', state.scheme === 'A');
     $('btn-b').classList.toggle('active', state.scheme === 'B');
+    $('btn-a').disabled = state.schemeLoading;
+    $('btn-b').disabled = state.schemeLoading;
     $('btn-bright').classList.toggle('active', state.bright);
     $('btn-dark').classList.toggle('active', !state.bright);
     $('btn-fp').classList.toggle('active', state.mode === 'fp');
@@ -76,16 +107,26 @@ function start() {
     $('scheme-tagline').textContent = SCHEMES[state.scheme].tagline;
   }
 
-  function setScheme(key) {
+  async function setScheme(key) {
+    if (state.schemeLoading || state.scheme === key) return;
+    state.schemeLoading = true;
+    refreshButtons();
+    await loadTextures(SCHEME_TEXTURES[key], (loaded, total) => {
+      showLoading(`${SCHEMES[key].name}を読み込んでいます`, loaded, total);
+    });
     state.scheme = key;
+    state.schemeLoading = false;
     world.applyScheme(key);
     refreshButtons();
+    hideLoading();
   }
+
   function setBright(bright) {
     state.bright = bright;
     world.setVenueBright(bright);
     refreshButtons();
   }
+
   function setMode(mode) {
     state.mode = mode;
     controls.setMode(mode);
@@ -93,8 +134,8 @@ function start() {
     refreshButtons();
   }
 
-  $('btn-a').addEventListener('click', () => setScheme('A'));
-  $('btn-b').addEventListener('click', () => setScheme('B'));
+  $('btn-a').addEventListener('click', () => void setScheme('A'));
+  $('btn-b').addEventListener('click', () => void setScheme('B'));
   $('btn-bright').addEventListener('click', () => setBright(true));
   $('btn-dark').addEventListener('click', () => setBright(false));
   $('btn-fp').addEventListener('click', () => setMode('fp'));
@@ -117,6 +158,19 @@ function start() {
   refreshButtons();
   updateHint();
 
+  // 画面素材は初回描画後に、表示時刻に合わせて段階的にロードする。
+  async function loadDisplayBatch(urls) {
+    await loadTextures(urls, (loaded, total) => {
+      assetStatus.textContent = loaded < total ? `画面素材を読み込み中 ${loaded} / ${total}` : '';
+    });
+    world.refreshDisplayTextures();
+    assetStatus.textContent = '';
+  }
+
+  void loadDisplayBatch([DISPLAY_TEXTURES.slides[0], DISPLAY_TEXTURES.website, DISPLAY_TEXTURES.zundamon]);
+  window.setTimeout(() => void loadDisplayBatch([DISPLAY_TEXTURES.slides[1]]), 3000);
+  window.setTimeout(() => void loadDisplayBatch([DISPLAY_TEXTURES.slides[2]]), 7000);
+
   // ================= レンダーループ =================
   const clock = new THREE.Clock();
   function animate() {
@@ -128,6 +182,13 @@ function start() {
   }
   animate();
 }
+
+initialize().catch((error) => {
+  console.error('初期化に失敗しました:', error);
+  loadingTitle.textContent = '表示の初期化に失敗しました';
+  loadingDetail.textContent = 'ページを再読み込みしてください';
+  loadingBar.style.width = '100%';
+});
 
 // ---- リサイズ ----
 window.addEventListener('resize', () => {
